@@ -1,47 +1,49 @@
 #include "monty.h"
-global_variable global = {NULL, NULL};
+
+int stackQueueError[3] = {0, 0, 0};
 /**
- * main - main function
- * @argc: count arguments
- * @argv: string argument
- * Return: 0
+ * main - Interpreter for Monty ByteCodes files.
+ * @argc: Argument counter.
+ * @argv: Argument vector.
+ * Return: 0 if succeed.
  */
 int main(int argc, char *argv[])
 {
-	char str[6000], *token;
-	void (*k)(stack_t **, unsigned int);
-	unsigned int line_number = 0;
+	char *path, *line, *lineToken[2];
+	FILE *fp;
+	void (*fptr)(stack_t **stack, unsigned int ln);
+	stack_t *head;
+	size_t len, nOfLine, status;
+	ssize_t nread;
 
-	if (argc != 2)
+	head = NULL;
+	line = NULL;
+	sizeOfArgc(argc);
+	path = argv[1];
+
+	fp = fopen(path, "r");
+	checkIfOpen(fp, path);
+	for (nOfLine = 1; (nread = getline(&line, &len, fp)) != -1; nOfLine++)
 	{
-		fprintf(stderr, "USAGE: monty file\n");
-		exit(EXIT_FAILURE);
-	}
-	global.demo = fopen(argv[1], "r");
-	if (!global.demo)
-	{
-		fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-		exit(EXIT_FAILURE);
-	}
-	while (fgets(str, 256, global.demo))
-	{
-		line_number++;
-		if (str[0] == 10)
+		if (checkIfEmpty(line))
 			continue;
-		token = strtok(str, " \t\n\r");
-		if (token == NULL)
+		status = tokenize(line, lineToken);
+		if (status == 0)
 			continue;
-		k = get_op_func(token);
-		if (!k)
-		{
-			fprintf(stderr, "L%d: unknown instruction %s\n", line_number, token);
-			free_list(global.head);
-			fclose(global.demo);
-			exit(EXIT_FAILURE);
-		}
-		k(&global.head, line_number);
+		if (strcmp(lineToken[0], "push") == 0)
+			pushArgs(lineToken, nOfLine);
+		isFail(line, fp, head);
+		stackOrQueue(lineToken[0]);
+		fptr = get_opt_function(lineToken[0]);
+		opcodeIsNull(fptr, nOfLine, lineToken[0]);
+		isFail(line, fp, head);
+		(*fptr)(&head, nOfLine);
+		isFail(line, fp, head);
+		clearString(lineToken);
 	}
-	free_list(global.head);
-	fclose(global.demo);
+	free(line);
+	fclose(fp);
+	freeStack(head);
+
 	return (0);
 }

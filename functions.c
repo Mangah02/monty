@@ -1,77 +1,109 @@
 #include "monty.h"
+
 /**
- * add_dnodeint - function
- *
- * @head: head function
- * @n: data to node
- * Return: Stack
+ * _push - Pushes an element to the stack.
+ * @stack: Head of the stack.
+ * @line_number: Line number.
  */
-stack_t *add_dnodeint(stack_t **head, int n)
+void _push(stack_t **stack, unsigned int line_number)
 {
-	stack_t *new_node = NULL;
+	int n;
 
-	if (head == NULL)
-		return (NULL);
-
-	new_node = malloc(sizeof(stack_t));
-	if (new_node == NULL)
-	{
-		fprintf(stderr, "Error: malloc failed\n");
-		free_list(global.head);
-		fclose(global.demo);
-		exit(EXIT_FAILURE);
-	}
-	new_node->n = n;
-	new_node->prev = NULL;
-	new_node->next = *head;
-	*head = new_node;
-	if (new_node->next != NULL)
-		(new_node->next)->prev = new_node;
-	return (new_node);
-}
-/**
- * comparedigit - compare if is digit
- * @s: string to compare
- * @line_number: line of code
- * Return: int digit
- */
-int comparedigit(char *s, unsigned int line_number)
-{
-	int i, digit = 0;
-
-	if (!s)
+	if (stackQueueError[1] == 0)
+		n = addStack(stack, stackQueueError[0]);
+	else
+		n = addQueue(stack, stackQueueError[0]);
+	if (n < 0)
 	{
 		fprintf(stderr, "L%d: usage: push integer\n", line_number);
-		free_list(global.head);
-		fclose(global.demo);
-		exit(EXIT_FAILURE);
+		stackQueueError[2] = 1;
+		return;
 	}
-	for (i = 0; s[i]; i++)
-	{
-		if (s[i] >= 65 && s[i] <= 122)
-		{
-			fprintf(stderr, "L%d: usage: push integer\n", line_number);
-			free_list(global.head);
-			fclose(global.demo);
-			exit(EXIT_FAILURE);
-		}
-	}
-	digit = atoi(s);
-	return (digit);
 }
-/**
- * free_list - free list
- * @head: pointer to the head
- * Return: nothing
- */
-void free_list(stack_t *head)
-{
-	stack_t *aux;
 
-	while (head)
+/**
+ * _pall - Prints all the values on the stack, starting from the top.
+ * @stack: Head of the stack.
+ * @line_number: Line number.
+ */
+void _pall(stack_t **stack, unsigned int line_number)
+{
+	stack_t *temp;
+
+	(void) line_number;
+	temp = (*stack);
+	while (temp)
 	{
-		aux = head;
-		head = head->next;
-		free(aux);
+		printf("%d\n", temp->n);
+		temp = temp->next;
 	}
+}
+
+/**
+ * _pint - print value at top of stack followed by new line
+ * @stack: Head of the stack.
+ * @line_number: Line number.
+ */
+void _pint(stack_t **stack, unsigned int line_number)
+{
+	stack_t *new_stack;
+
+	new_stack = *stack;
+	if (!new_stack)
+	{
+		fprintf(stderr, "L%d: can't pint, stack empty\n", line_number);
+		stackQueueError[2] = 1;
+		return;
+	}
+	printf("%d\n", new_stack->n);
+}
+
+/**
+ * _pop - Removes the top element of the stack.
+ * @stack: Head of the stack.
+ * @line_number: Line number.
+ */
+void _pop(stack_t **stack, unsigned int line_number)
+{
+	stack_t *temp;
+
+	if (!*stack)
+	{
+		fprintf(stderr, "L%d: can't pop an empty stack\n", line_number);
+		stackQueueError[2] = 1;
+		return;
+	}
+	temp = (*stack);
+	if (temp->next == NULL)
+	{
+		free(temp);
+		(*stack) = NULL;
+		return;
+	}
+	(*stack) = (*stack)->next;
+	(*stack)->prev = NULL;
+	free(temp);
+}
+
+/**
+ * _swap - Swaps the top two elements of the stack.
+ * @stack: Head of the stack.
+ * @line_number: Line number.
+ */
+void _swap(stack_t **stack, unsigned int line_number)
+{
+	stack_t *temp, *temp2;
+	int temp_value;
+
+	if (!(*stack) || !(*stack)->next)
+	{
+		fprintf(stderr, "L%d: can't swap, stack too short\n", line_number);
+		stackQueueError[2] = 1;
+		return;
+	}
+	temp = (*stack);
+	temp2 = temp->next;
+	temp_value = temp->n;
+	temp->n = temp2->n;
+	temp2->n = temp_value;
 }
